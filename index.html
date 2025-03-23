@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Online Notepad</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .container {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      width: 90%;
+      max-width: 600px;
+      text-align: center;
+      animation: fadeIn 1s ease-in-out;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    textarea {
+      width: 100%;
+      height: 300px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 16px;
+      resize: none;
+      margin-bottom: 20px;
+      transition: border-color 0.3s ease;
+    }
+
+    textarea:focus {
+      border-color: #007bff;
+      outline: none;
+    }
+
+    .buttons {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      background: #007bff;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    #linkMessage {
+      margin-top: 20px;
+      color: #007bff;
+      font-weight: bold;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Online Notepad</h1>
+    <textarea id="notepad" placeholder="Start typing here..."></textarea>
+    <div class="buttons">
+      <button id="generateReadOnlyLink">Generate Read-Only Link</button>
+      <button id="generateEditableLink">Generate Editable Link</button>
+    </div>
+    <p id="linkMessage"></p>
+  </div>
+
+  <script>
+    // Get elements
+    const notepad = document.getElementById('notepad');
+    const generateReadOnlyLink = document.getElementById('generateReadOnlyLink');
+    const generateEditableLink = document.getElementById('generateEditableLink');
+    const linkMessage = document.getElementById('linkMessage');
+
+    // Load saved content from localStorage
+    notepad.value = localStorage.getItem('notepadContent') || '';
+
+    // Auto-save content to localStorage
+    notepad.addEventListener('input', () => {
+      localStorage.setItem('notepadContent', notepad.value);
+    });
+
+    // Function to copy text to clipboard
+    const copyToClipboard = (text) => {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(() => {
+          linkMessage.textContent = 'Link Copied to Clipboard!';
+        }).catch(() => {
+          fallbackCopyToClipboard(text);
+        });
+      } else {
+        fallbackCopyToClipboard(text);
+      }
+    };
+
+    // Fallback for copying text
+    const fallbackCopyToClipboard = (text) => {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        linkMessage.textContent = 'Link Copied to Clipboard!';
+      } catch (err) {
+        linkMessage.textContent = 'Failed to Copy Link. Please copy it manually.';
+      }
+      document.body.removeChild(textarea);
+    };
+
+    // Generate Read-Only Link
+    generateReadOnlyLink.addEventListener('click', () => {
+      const content = encodeURIComponent(notepad.value);
+      const url = `${window.location.origin}${window.location.pathname}?content=${content}&mode=readonly`;
+      copyToClipboard(url);
+    });
+
+    // Generate Editable Link
+    generateEditableLink.addEventListener('click', () => {
+      const content = encodeURIComponent(notepad.value);
+      const url = `${window.location.origin}${window.location.pathname}?content=${content}&mode=editable`;
+      copyToClipboard(url);
+    });
+
+    // Load content from URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const contentParam = urlParams.get('content');
+    const modeParam = urlParams.get('mode');
+
+    if (contentParam) {
+      notepad.value = decodeURIComponent(contentParam);
+      if (modeParam === 'readonly') {
+        notepad.setAttribute('readonly', true);
+        notepad.style.backgroundColor = '#f0f0f0';
+        linkMessage.textContent = 'You are viewing in read-only mode.';
+      }
+    }
+  </script>
+</body>
+</html>
